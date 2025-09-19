@@ -5,28 +5,35 @@ import { Op } from "sequelize";
 // @desc    Fetch all products (pagination + search)
 const getProducts = async (req, res, next) => {
   try {
+    const defaultLimit = 12; // Minimum products per page
     const maxLimit = Number(process.env.PAGINATION_MAX_LIMIT) || 20;
-    const limit = Number(req.query.limit) || maxLimit;
+
+    // Ensure limit is at least 12 and not more than maxLimit
+    let limit = Number(req.query.limit) || defaultLimit;
+    if (limit < defaultLimit) limit = defaultLimit;
+    if (limit > maxLimit) limit = maxLimit;
+
+    // Skip (offset)
     const skip = Number(req.query.skip) || 0;
     const search = req.query.search || "";
 
     const { count: total, rows: products } = await Product.findAndCountAll({
       where: { name: { [Op.like]: `%${search}%` } },
-      limit: limit > maxLimit ? maxLimit : limit,
+      limit,
       offset: skip < 0 ? 0 : skip,
     });
 
     res.status(200).json({
       products,
       total,
+      limit,
       maxLimit,
-      maxSkip: total === 0 ? 0 : total - 1,
+      maxSkip: total === 0 ? 0 : total - limit,
     });
   } catch (error) {
     next(error);
   }
 };
-
 // @desc    Fetch top products
 const getTopProducts = async (req, res, next) => {
   try {
