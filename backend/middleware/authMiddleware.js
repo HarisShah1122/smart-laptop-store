@@ -1,9 +1,7 @@
+
 import jwt from "jsonwebtoken";
 import { User } from "../models/userModel.js";
 
-/**
- * protect - Verify JWT and attach user to req
- */
 export const protect = async (req, res, next) => {
   try {
     let token;
@@ -38,9 +36,6 @@ export const protect = async (req, res, next) => {
   }
 };
 
-/**
- * admin - require isAdmin flag
- */
 export const admin = (req, res, next) => {
   try {
     if (!req.user || !req.user.isAdmin) {
@@ -52,5 +47,3 @@ export const admin = (req, res, next) => {
     next(error);
   }
 };
-
-export default protect;

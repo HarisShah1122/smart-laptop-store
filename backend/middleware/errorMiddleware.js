@@ -1,3 +1,4 @@
+
 const notFound = (req, res, next) => {
   res.status(404);
   const error = new Error(`🔍 - Not Found - ${req.originalUrl}`);
@@ -10,10 +11,10 @@ const errorHandler = (err, req, res, next) => {
 
   const responseBody = {
     message: err.message,
-    stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack
+    stack: process.env.NODE_ENV === "production" ? "🥞" : err.stack,
   };
 
-  console.error('Error: ', responseBody);
+  console.error("Error: ", responseBody);
   res.json(responseBody);
 };
 

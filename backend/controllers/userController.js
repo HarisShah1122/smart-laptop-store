@@ -1,3 +1,4 @@
+
 import { User } from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -105,12 +106,25 @@ const getUserProfile = async (req, res, next) => {
 
 const updateUserProfile = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, confirmPassword, oldPassword } = req.body;
     const user = req.user;
 
     if (!user) {
       res.status(404);
       throw new Error("User not found. Unable to update profile.");
+    }
+
+    if (password && password !== confirmPassword) {
+      res.status(400);
+      throw new Error("Passwords do not match.");
+    }
+
+    if (password && oldPassword) {
+      const match = await bcrypt.compare(oldPassword, user.password);
+      if (!match) {
+        res.status(401);
+        throw new Error("Current password is incorrect.");
+      }
     }
 
     user.name = name ?? user.name;
