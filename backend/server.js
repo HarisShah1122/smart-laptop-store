@@ -23,7 +23,14 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Middleware
-app.use(cors({ origin: "http://localhost:3000", credentials: true, allowedHeaders: ['Content-Type', 'Authorization'] }));
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "http://localhost:3001"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(compression());
 app.use(cookieParser());
 app.use(express.json());
