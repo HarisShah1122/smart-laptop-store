@@ -14,7 +14,10 @@ import Message from '../../components/Message';
 import Meta from '../../components/Meta';
 
 const ProductFormPage = () => {
-  const { id: productId } = useParams();
+  const { id } = useParams();
+  const productId = id && id !== 'undefined' ? id : null;
+  const isUpdateMode = !!productId;
+
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -25,15 +28,11 @@ const ProductFormPage = () => {
   const [price, setPrice] = useState(0);
   const [countInStock, setCountInStock] = useState(0);
 
-  const isUpdateMode = !!productId && productId !== 'undefined';
-
   const {
     data: product,
     isLoading,
     error
-  } = useGetProductDetailsQuery(productId, {
-    skip: !isUpdateMode // Skip query if not in update mode or invalid productId
-  });
+  } = useGetProductDetailsQuery(productId, { skip: !isUpdateMode });
 
   const [createProduct, { isLoading: isCreateProductLoading }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdateProductLoading }] = useUpdateProductMutation();
@@ -76,10 +75,7 @@ const ProductFormPage = () => {
         countInStock
       };
       if (isUpdateMode) {
-        const { data } = await updateProduct({
-          productId,
-          ...productData
-        });
+        const { data } = await updateProduct({ productId, ...productData });
         toast.success(data.message);
       } else {
         const { data } = await createProduct(productData);
@@ -90,21 +86,6 @@ const ProductFormPage = () => {
       toast.error(error?.data?.message || error.error);
     }
   };
-
-  // Handle invalid productId
-  if (isUpdateMode && (!productId || productId === 'undefined')) {
-    return (
-      <>
-        <Meta title={'Invalid Product'} />
-        <Link to='/admin/product-list' className='btn btn-light my-3'>
-          Go Back
-        </Link>
-        <Message variant='danger'>
-          Invalid product ID. Please select a valid product.
-        </Message>
-      </>
-    );
-  }
 
   return (
     <>
@@ -130,7 +111,7 @@ const ProductFormPage = () => {
                 placeholder='Enter name'
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
             <Form.Group controlId='price'>
               <Form.Label>Price</Form.Label>
@@ -139,14 +120,11 @@ const ProductFormPage = () => {
                 placeholder='Enter price'
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
             <Form.Group controlId='image'>
               <Form.Label>Image</Form.Label>
-              <Form.Control
-                type='file'
-                onChange={uploadFileHandler}
-              ></Form.Control>
+              <Form.Control type='file' onChange={uploadFileHandler} />
             </Form.Group>
             <Form.Group controlId='brand'>
               <Form.Label>Brand</Form.Label>
@@ -155,7 +133,7 @@ const ProductFormPage = () => {
                 placeholder='Enter brand'
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
             <Form.Group controlId='countInStock'>
               <Form.Label>Count In Stock</Form.Label>
@@ -164,7 +142,7 @@ const ProductFormPage = () => {
                 placeholder='Enter countInStock'
                 value={countInStock}
                 onChange={(e) => setCountInStock(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
             <Form.Group controlId='category'>
               <Form.Label>Category</Form.Label>
@@ -173,7 +151,7 @@ const ProductFormPage = () => {
                 placeholder='Enter category'
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
             <Form.Group controlId='description'>
               <Form.Label>Description</Form.Label>
@@ -183,13 +161,9 @@ const ProductFormPage = () => {
                 placeholder='Enter description'
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
-            <Button
-              type='submit'
-              variant='primary'
-              style={{ marginTop: '1rem' }}
-            >
+            <Button type='submit' variant='primary' style={{ marginTop: '1rem' }}>
               {isUpdateMode ? 'Update Product' : 'Create Product'}
             </Button>
           </Form>

@@ -2,18 +2,16 @@ import { Product } from "../models/productModel.js";
 import { deleteFile } from "../utils/file.js";
 import { Op } from "sequelize";
 
-// @desc    Fetch all products (pagination + search)
+// @desc    Fetch all products
 const getProducts = async (req, res, next) => {
   try {
-    const defaultLimit = 12; // Minimum products per page
+    const defaultLimit = 12;
     const maxLimit = Number(process.env.PAGINATION_MAX_LIMIT) || 20;
 
-    // Ensure limit is at least 12 and not more than maxLimit
     let limit = Number(req.query.limit) || defaultLimit;
     if (limit < defaultLimit) limit = defaultLimit;
     if (limit > maxLimit) limit = maxLimit;
 
-    // Skip (offset)
     const skip = Number(req.query.skip) || 0;
     const search = req.query.search || "";
 
@@ -34,33 +32,24 @@ const getProducts = async (req, res, next) => {
     next(error);
   }
 };
-// @desc    Fetch top products
-const getTopProducts = async (req, res, next) => {
-  try {
-    const products = await Product.findAll({
-      order: [["rating", "DESC"]],
-      limit: 3,
-    });
-    res.status(200).json(products);
-  } catch (error) {
-    next(error);
-  }
-};
 
 // @desc    Fetch single product
 const getProduct = async (req, res, next) => {
   try {
     const productId = req.params.id;
-    if (!productId || productId === 'undefined') {
+
+    if (!productId || isNaN(Number(productId))) {
       res.status(400);
-      throw new Error('Invalid product ID');
+      throw new Error("Invalid product ID");
     }
+
     const product = await Product.findByPk(productId);
+
     if (!product) {
       res.status(404);
-      throw new Error('Product not found!');
+      throw new Error("Product not found!");
     }
-    
+
     res.status(200).json(product);
   } catch (error) {
     next(error);
@@ -150,8 +139,17 @@ const createProductReview = async (req, res, next) => {
       throw new Error("Product not found!");
     }
 
-    const reviews = product.reviews || [];
+    // Parse reviews (stored as string in DB)
+    let reviews = [];
+    if (product.reviews) {
+      try {
+        reviews = JSON.parse(product.reviews);
+      } catch (e) {
+        reviews = [];
+      }
+    }
 
+    // Check if user already reviewed
     const alreadyReviewed = reviews.find((r) => r.userId === req.user.id);
     if (alreadyReviewed) {
       res.status(400);
@@ -172,12 +170,27 @@ const createProductReview = async (req, res, next) => {
       reviews.reduce((acc, r) => acc + r.rating, 0) / numReviews;
 
     await product.update({
-      reviews,
+      reviews: JSON.stringify(reviews), // Save back as string
       numReviews,
       rating: avgRating,
     });
 
     res.status(201).json({ message: "Review added" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// @desc    Get top rated products
+const getTopProducts = async (req, res, next) => {
+  try {
+    const products = await Product.findAll({
+      order: [["rating", "DESC"]],
+      limit: 3,
+    });
+
+    res.status(200).json(products);
   } catch (error) {
     next(error);
   }
@@ -190,5 +203,5 @@ export {
   updateProduct,
   deleteProduct,
   createProductReview,
-  getTopProducts,
+  getTopProducts, 
 };

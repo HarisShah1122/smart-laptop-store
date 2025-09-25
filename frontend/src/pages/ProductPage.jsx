@@ -9,7 +9,7 @@ import {
   Form,
   ListGroupItem,
 } from 'react-bootstrap';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   useGetProductDetailsQuery,
@@ -25,27 +25,26 @@ import { addCurrency } from '../utils/addCurrency';
 import Reviews from '../components/Reviews';
 
 const ProductPage = () => {
-  const { id: productId } = useParams();
+  const { id } = useParams();
+  const productId = id && id !== 'undefined' ? id : null;
+
   const [qty, setQty] = useState(1);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
-  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const { userInfo } = useSelector((state) => state.auth);
 
-  // Use skip option to avoid querying with invalid productId
   const {
     data: product,
     isLoading,
     error,
-  } = useGetProductDetailsQuery(productId, { skip: !productId || productId === 'undefined' });
+  } = useGetProductDetailsQuery(productId, { skip: !productId });
 
   const [createProductReview, { isLoading: isCreateProductReviewLoading }] =
     useCreateProductReviewMutation();
 
-  // Handle invalid productId
-  if (!productId || productId === 'undefined') {
+  if (!productId) {
     return (
       <>
         <Meta title={'Invalid Product'} />
@@ -67,11 +66,7 @@ const ProductPage = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      const res = await createProductReview({
-        productId,
-        rating,
-        comment,
-      });
+      const res = await createProductReview({ productId, rating, comment });
       if (res.error) {
         toast.error(res.error?.data?.message || res.error);
       } else {
