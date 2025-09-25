@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLoginMutation } from '../../slices/usersApiSlice';
 import { setCredentials } from '../../slices/authSlice';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import FormContainer from '../../components/FormContainer';
 import Meta from '../../components/Meta';
 import Footer from '../../components/Footer';
@@ -19,7 +19,7 @@ const AdminLoginPage = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { userInfo } = useSelector(state => state.auth);
+  const { userInfo } = useSelector((state) => state.auth);
 
   const { search } = useLocation();
   const searchParams = new URLSearchParams(search);
@@ -33,11 +33,19 @@ const AdminLoginPage = () => {
     }
   }, [userInfo, redirect, navigate]);
 
-  const submitHandler = async e => {
+  const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      const res = await login({ email, password, remember }).unwrap();
+      // ✅ Send only email & password
+      const res = await login({ email, password }).unwrap();
       dispatch(setCredentials({ ...res }));
+
+      if (remember) {
+        localStorage.setItem('userInfo', JSON.stringify(res));
+      } else {
+        sessionStorage.setItem('userInfo', JSON.stringify(res));
+      }
+
       navigate('/admin/dashboard');
       toast.success('Login successful');
     } catch (error) {
@@ -63,9 +71,10 @@ const AdminLoginPage = () => {
                   type='email'
                   value={email}
                   placeholder='Enter email'
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </Form.Group>
+
               <Form.Group className='mb-3' controlId='password'>
                 <Form.Label>Password</Form.Label>
                 <InputGroup>
@@ -73,7 +82,7 @@ const AdminLoginPage = () => {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     placeholder='Enter password'
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <InputGroup.Text
                     onClick={togglePasswordVisibility}
@@ -84,6 +93,7 @@ const AdminLoginPage = () => {
                   </InputGroup.Text>
                 </InputGroup>
               </Form.Group>
+
               <Form.Group className='mb-3' controlId='checkbox'>
                 <Form.Check
                   type='checkbox'
@@ -92,13 +102,14 @@ const AdminLoginPage = () => {
                   onChange={() => setRemember(!remember)}
                 />
               </Form.Group>
+
               <Button
                 className='my-3 w-100'
                 variant='warning'
                 type='submit'
                 disabled={isLoading}
               >
-                Sign In
+                {isLoading ? <Loader /> : 'Sign In'}
               </Button>
             </Form>
           </Card>

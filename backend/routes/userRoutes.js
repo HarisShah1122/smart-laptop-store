@@ -1,4 +1,3 @@
-
 import express from "express";
 import {
   loginUser,
@@ -22,12 +21,16 @@ const router = express.Router();
 
 // Validation schemas
 const checkLogin = [
-  body("email").trim().notEmpty().withMessage("Email is required").bail().isEmail().withMessage("Please enter a valid email address"),
+  body("email").trim().notEmpty().withMessage("Email is required")
+    .bail()
+    .isEmail().withMessage("Please enter a valid email address"),
   body("password").trim().notEmpty().withMessage("Password is required"),
 ];
 
 const checkNewUser = [
-  body("email").trim().notEmpty().withMessage("Email is required").bail().isEmail().withMessage("Please enter a valid email address"),
+  body("email").trim().notEmpty().withMessage("Email is required")
+    .bail()
+    .isEmail().withMessage("Please enter a valid email address"),
   body("password")
     .trim()
     .notEmpty()
@@ -66,7 +69,9 @@ const checkUpdateUser = [
 ];
 
 const resetPasswordRequestValidator = [
-  body("email").trim().notEmpty().withMessage("Email is required").bail().isEmail().withMessage("Please enter a valid email address"),
+  body("email").trim().notEmpty().withMessage("Email is required")
+    .bail()
+    .isEmail().withMessage("Please enter a valid email address"),
 ];
 
 const resetPasswordValidator = [
@@ -79,13 +84,18 @@ const resetPasswordValidator = [
 ];
 
 // Routes
-router.route("/").post(checkNewUser, validateRequest, registerUser).get(protect, admin, getUsers);
+router.route("/")
+  .post(checkNewUser, validateRequest, registerUser)
+  .get(protect, admin, getUsers);
+
 router.route("/admins").get(protect, admin, admins);
 router.route("/reset-password/request").post(resetPasswordRequestValidator, validateRequest, resetPasswordRequest);
 router.route("/reset-password/reset/:id/:token").post(resetPasswordValidator, validateRequest, resetPassword);
+
 router.route("/login").post(checkLogin, validateRequest, loginUser);
 router.route("/logout").post(protect, logoutUser);
 router.route("/profile").get(protect, getUserProfile).put(protect, checkUpdateProfile, validateRequest, updateUserProfile);
+
 router.route("/:id")
   .get(checkGetUserById, validateRequest, protect, admin, getUserById)
   .put(checkUpdateUser, validateRequest, protect, admin, updateUser)

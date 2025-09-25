@@ -4,34 +4,32 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { generateToken } from "../utils/generateToken.js";
 import transporter from "../config/email.js";
-
+// @desc    Login user
+// @route   POST /api/v1/users/login
+// @access  Public
 const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      res.status(400);
-      throw new Error("Please provide both email and password.");
+      return res.status(400).json({ message: "Please provide both email and password." });
     }
 
     const user = await User.findOne({ where: { email } });
-
     if (!user) {
-      res.status(401);
-      throw new Error("Invalid email or password.");
+      return res.status(401).json({ message: "Invalid email or password." });
     }
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      res.status(401);
-      throw new Error("Invalid email or password.");
+      return res.status(401).json({ message: "Invalid email or password." });
     }
 
     const token = generateToken(user.id);
 
     res.status(200).json({
       message: "Login successful.",
-      userId: user.id,
+      _id: user.id,
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
@@ -42,19 +40,20 @@ const loginUser = async (req, res, next) => {
   }
 };
 
+// @desc    Register user
+// @route   POST /api/v1/users
+// @access  Public
 const registerUser = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      res.status(400);
-      throw new Error("Please provide name, email, and password.");
+      return res.status(400).json({ message: "Please provide name, email, and password." });
     }
 
     const userExists = await User.findOne({ where: { email } });
     if (userExists) {
-      res.status(409);
-      throw new Error("User already exists. Please choose a different email.");
+      return res.status(409).json({ message: "User already exists. Please choose a different email." });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -69,7 +68,7 @@ const registerUser = async (req, res, next) => {
 
     res.status(201).json({
       message: "Registration successful. Welcome!",
-      userId: user.id,
+      _id: user.id,
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
@@ -79,7 +78,6 @@ const registerUser = async (req, res, next) => {
     next(error);
   }
 };
-
 const logoutUser = (req, res, next) => {
   res.status(200).json({ message: "Logout successful" });
 };

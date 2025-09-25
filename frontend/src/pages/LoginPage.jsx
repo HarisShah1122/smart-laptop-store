@@ -20,8 +20,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
 
   const [login, { isLoading }] = useLoginMutation();
-
-  const { userInfo } = useSelector(state => state.auth);
+  const { userInfo } = useSelector((state) => state.auth);
 
   const { search } = useLocation();
   const searchParams = new URLSearchParams(search);
@@ -37,17 +36,26 @@ const LoginPage = () => {
     setShowPassword(!showPassword);
   };
 
-  const submitHandler = async e => {
+  const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      const res = await login({ email, password, remember }).unwrap();
+      // ✅ Send only email & password
+      const res = await login({ email, password }).unwrap();
       dispatch(setCredentials({ ...res }));
+
+      if (remember) {
+        localStorage.setItem('userInfo', JSON.stringify(res));
+      } else {
+        sessionStorage.setItem('userInfo', JSON.stringify(res));
+      }
+
       navigate(redirect);
       toast.success('Login successful');
     } catch (error) {
       toast.error(error?.data?.message || error.error);
     }
   };
+
   return (
     <FormContainer>
       <Meta title={'Sign In'} />
@@ -59,9 +67,10 @@ const LoginPage = () => {
             type='email'
             value={email}
             placeholder='Enter email'
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </Form.Group>
+
         <Form.Group className='mb-3' controlId='password'>
           <Form.Label>Password</Form.Label>
           <InputGroup>
@@ -69,7 +78,7 @@ const LoginPage = () => {
               type={showPassword ? 'text' : 'password'}
               value={password}
               placeholder='Enter password'
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <InputGroup.Text
               onClick={togglePasswordVisibility}
@@ -80,6 +89,7 @@ const LoginPage = () => {
             </InputGroup.Text>
           </InputGroup>
         </Form.Group>
+
         <Row>
           <Col>
             <Form.Group className='mb-3' controlId='checkbox'>
@@ -97,15 +107,17 @@ const LoginPage = () => {
             </Link>
           </Col>
         </Row>
+
         <Button
           className='mb-3 w-100'
           variant='warning'
           type='submit'
           disabled={isLoading}
         >
-          Sign In
+          {isLoading ? <Loader /> : 'Sign In'}
         </Button>
       </Form>
+
       <Row>
         <Col>
           New Customer?
