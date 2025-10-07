@@ -6,13 +6,14 @@ import { useNavigate } from 'react-router-dom';
 import FormContainer from '../components/FormContainer';
 import CheckoutSteps from '../components/CheckoutSteps';
 import Meta from '../components/Meta';
+
 const Payment = () => {
-  const [paymentMethod, setPaymentMethod] = useState('Razorpay');
+  const [paymentMethod, setPaymentMethod] = useState('Stripe');
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { shippingAddress } = useSelector(state => state.cart);
+  const { shippingAddress } = useSelector((state) => state.cart);
 
   useEffect(() => {
     if (!shippingAddress) {
@@ -20,33 +21,47 @@ const Payment = () => {
     }
   }, [shippingAddress, navigate]);
 
-  const submitHandler = e => {
+  const submitHandler = (e) => {
     e.preventDefault();
     dispatch(savePaymentMethod(paymentMethod));
     navigate('/place-order');
   };
+
   return (
     <FormContainer>
       <CheckoutSteps step1 step2 step3 />
-      <Meta title={'Payment Method'} />
+      <Meta title="Payment Method" />
       <h1>Payment Method</h1>
+
       <Form onSubmit={submitHandler}>
         <Form.Group>
-          <Form.Label as='legend'>Select Method</Form.Label>
+          <Form.Label as="legend">Select Method</Form.Label>
           <Col>
             <Form.Check
-              className='my-2'
-              type='radio'
-              id='Razorpay'
-              label='Razorpay'
-              name='paymentMethod'
-              value='Razorpay'
-              checked
-              onChange={e => setPaymentMethod(e.target.value)}
+              className="my-2"
+              type="radio"
+              id="Stripe"
+              label="Stripe"
+              name="paymentMethod"
+              value="Stripe"
+              checked={paymentMethod === 'Stripe'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            ></Form.Check>
+
+            <Form.Check
+              className="my-2"
+              type="radio"
+              id="PayPal"
+              label="PayPal"
+              name="paymentMethod"
+              value="PayPal"
+              checked={paymentMethod === 'PayPal'}
+              onChange={(e) => setPaymentMethod(e.target.value)}
             ></Form.Check>
           </Col>
         </Form.Group>
-        <Button className='mb-3 w-100' variant='warning' type='submit'>
+
+        <Button className="mb-3 w-100" variant="warning" type="submit">
           Continue
         </Button>
       </Form>
