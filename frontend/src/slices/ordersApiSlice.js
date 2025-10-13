@@ -9,12 +9,20 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
         method: 'POST',
         body: { ...order }
       }),
+      transformResponse: response => ({
+        ...response,
+        _id: response._id || response.id
+      }),
       invalidatesTags: ['Order']
     }),
 
     getOrderDetails: builder.query({
       query: orderId => ({
         url: `${ORDERS_URL}/${orderId}`
+      }),
+      transformResponse: response => ({
+        ...response,
+        _id: response.id 
       }),
       providesTags: ['Order']
     }),
@@ -23,6 +31,11 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       query: () => ({
         url: `${ORDERS_URL}/my-orders`
       }),
+      transformResponse: response =>
+        response.map(order => ({
+          ...order,
+          _id: order.id 
+        })),
       providesTags: ['Order']
     }),
 
@@ -54,6 +67,11 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       query: () => ({
         url: ORDERS_URL
       }),
+      transformResponse: response =>
+        response.map(order => ({
+          ...order,
+          _id: order.id 
+        })),
       providesTags: ['Order']
     })
   })

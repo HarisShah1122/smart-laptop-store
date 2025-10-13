@@ -48,7 +48,7 @@ const validator = {
       .isNumeric()
       .withMessage('Total price must be a number')
   ]
-}
+};
 
 router.route('/')
   .post(validator.addOrderItems, validateRequest, protect, addOrderItems)

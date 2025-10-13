@@ -21,6 +21,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// Set CSP headers
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "script-src-elem 'self' https://js.stripe.com; script-src 'self' https://js.stripe.com; connect-src 'self' http://localhost:5000 ws://localhost:5000 https://api.stripe.com; default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
+  );
+  next();
+});
 
 // Middleware
 app.use(

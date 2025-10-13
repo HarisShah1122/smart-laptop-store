@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Message from '../components/Message';
@@ -8,7 +8,7 @@ const CancelPage = () => {
 
   useEffect(() => {
     toast.error('PayPal payment was cancelled');
-    navigate('/'); // Redirect to home or order page
+    navigate('/');
   }, [navigate]);
 
   return <Message variant="warning">Payment Cancelled</Message>;

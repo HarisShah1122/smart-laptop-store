@@ -1,10 +1,12 @@
 import { Order } from "../models/orderModel.js";
+import { User } from "../models/userModel.js";
+import asyncHandler from 'express-async-handler';
 
 // @desc     Create new order
 // @method   POST
 // @endpoint /api/v1/orders
 // @access   Private
-const addOrderItems = async (req, res, next) => {
+const addOrderItems = asyncHandler(async (req, res, next) => {
   try {
     const {
       cartItems,
@@ -16,24 +18,31 @@ const addOrderItems = async (req, res, next) => {
       totalPrice
     } = req.body;
     console.log(
+      'Order Data:',
       cartItems,
       shippingAddress,
       paymentMethod,
       itemsPrice,
       taxPrice,
       shippingPrice,
-      totalPrice
+      totalPrice,
+      'User ID:',
+      req.user?.id
     );
     if (!cartItems || cartItems.length === 0) {
       res.statusCode = 400;
       throw new Error('No order items.');
     }
+    if (!req.user || !req.user.id) {
+      res.statusCode = 401;
+      throw new Error('User not authenticated');
+    }
 
-    const order = new Order({
-      user: req.user._id,
+    const order = await Order.create({
+      userId: req.user.id,
       orderItems: cartItems.map(item => ({
         ...item,
-        product: item._id
+        productId: item._id
       })),
       shippingAddress,
       paymentMethod,
@@ -43,62 +52,86 @@ const addOrderItems = async (req, res, next) => {
       totalPrice
     });
 
-    const createdOrder = await order.save();
+    console.log('Created Order:', order);
 
-    res.status(201).json(createdOrder);
+    res.status(201).json({
+      ...order.dataValues,
+      _id: order.id
+    });
   } catch (error) {
+    console.error('Order creation error:', error);
     next(error);
   }
-};
+});
 
 // @desc     Get logged-in user orders
 // @method   GET
 // @endpoint /api/v1/orders/my-orders
 // @access   Private
-const getMyOrders = async (req, res, next) => {
+const getMyOrders = asyncHandler(async (req, res, next) => {
   try {
-    const orders = await Order.find({ user: req.user._id });
+    if (!req.user || !req.user.id) {
+      res.statusCode = 401;
+      throw new Error('User not authenticated');
+    }
+
+    const orders = await Order.findAll({ where: { userId: req.user.id } });
 
     if (!orders || orders.length === 0) {
       res.statusCode = 404;
       throw new Error('No orders found for the logged-in user.');
     }
 
-    res.status(200).json(orders);
+    res.status(200).json(
+      orders.map(order => ({
+        ...order.dataValues,
+        _id: order.id
+      }))
+    );
   } catch (error) {
     next(error);
   }
-};
+});
 
 // @desc     Get order by ID
 // @method   GET
 // @endpoint /api/v1/orders/:id
 // @access   Private
-const getOrderById = async (req, res, next) => {
+const getOrderById = asyncHandler(async (req, res, next) => {
   try {
     const { id: orderId } = req.params;
 
-    const order = await Order.findById(orderId).populate('user', 'name email');
+    if (!orderId || orderId === 'undefined') {
+      res.statusCode = 400;
+      throw new Error('Invalid order ID');
+    }
+
+    const order = await Order.findByPk(orderId, {
+      include: [{ model: User, attributes: ['id', 'name', 'email'] }]
+    });
 
     if (!order) {
       res.statusCode = 404;
       throw new Error('Order not found!');
     }
 
-    res.status(200).json(order);
+    res.status(200).json({
+      ...order.dataValues,
+      _id: order.id
+    });
   } catch (error) {
     next(error);
   }
-};
+});
 
 // @desc     Update order to paid
 // @method   PUT
 // @endpoint /api/v1/orders/:id/pay
 // @access   Private
-const updateOrderToPaid = async (req, res) => {
+const updateOrderToPaid = asyncHandler(async (req, res, next) => {
   try {
     const { id: orderId } = req.params;
-    const order = await Order.findById(orderId);
+    const order = await Order.findByPk(orderId);
 
     if (!order) {
       res.statusCode = 404;
@@ -116,20 +149,23 @@ const updateOrderToPaid = async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    res.status(200).json(updatedOrder);
+    res.status(200).json({
+      ...updatedOrder.dataValues,
+      _id: updatedOrder.id
+    });
   } catch (error) {
     next(error);
   }
-};
+});
 
 // @desc     Update order to delivered
 // @method   PUT
 // @endpoint /api/v1/orders/:id/deliver
 // @access   Private/Admin
-const updateOrderToDeliver = async (req, res) => {
+const updateOrderToDeliver = asyncHandler(async (req, res, next) => {
   try {
     const { id: orderId } = req.params;
-    const order = await Order.findById(orderId);
+    const order = await Order.findByPk(orderId);
 
     if (!order) {
       res.statusCode = 404;
@@ -141,29 +177,40 @@ const updateOrderToDeliver = async (req, res) => {
 
     const updatedDeliver = await order.save();
 
-    res.status(200).json(updatedDeliver);
+    res.status(200).json({
+      ...updatedDeliver.dataValues,
+      _id: updatedDeliver.id
+    });
   } catch (error) {
     next(error);
   }
-};
+});
 
 // @desc     Get all orders
 // @method   GET
 // @endpoint /api/v1/orders
 // @access   Private/Admin
-const getOrders = async (req, res, next) => {
+const getOrders = asyncHandler(async (req, res, next) => {
   try {
-    const orders = await Order.find().populate('user', 'id name');
+    const orders = await Order.findAll({
+      include: [{ model: User, attributes: ['id', 'name'] }]
+    });
 
     if (!orders || orders.length === 0) {
       res.statusCode = 404;
       throw new Error('Orders not found!');
     }
-    res.status(200).json(orders);
+
+    res.status(200).json(
+      orders.map(order => ({
+        ...order.dataValues,
+        _id: order.id
+      }))
+    );
   } catch (error) {
     next(error);
   }
-};
+});
 
 export {
   addOrderItems,

@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { generateToken } from "../utils/generateToken.js";
 import transporter from "../config/email.js";
+
 // @desc    Login user
 // @route   POST /api/v1/users/login
 // @access  Public
@@ -29,7 +30,7 @@ const loginUser = async (req, res, next) => {
 
     res.status(200).json({
       message: "Login successful.",
-      _id: user.id,
+      id: user.id,
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
@@ -68,7 +69,7 @@ const registerUser = async (req, res, next) => {
 
     res.status(201).json({
       message: "Registration successful. Welcome!",
-      _id: user.id,
+      id: user.id,
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,

@@ -20,6 +20,8 @@ const SuccessPage = () => {
     const paymentId = query.get('token');
     const payerId = query.get('PayerID');
 
+    console.log('SuccessPage orderId:', orderId); // Debug log
+
     const validatePayPalPayment = async () => {
       try {
         const { data } = await axios.post(
@@ -46,7 +48,7 @@ const SuccessPage = () => {
       validatePayPalPayment();
     } else {
       toast.error('Invalid PayPal payment details');
-      navigate('/');
+      navigate('/profile');
     }
   }, [location, payOrder, navigate, userInfo]);
 

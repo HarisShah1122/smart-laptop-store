@@ -3,7 +3,6 @@ import { Row, Col, Button, Table } from 'react-bootstrap';
 import { FaCheck, FaXmark } from 'react-icons/fa6';
 import { useGetMyOrdersQuery } from '../slices/ordersApiSlice';
 import { LinkContainer } from 'react-router-bootstrap';
-import { FaIndianRupeeSign } from 'react-icons/fa6';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import Meta from '../components/Meta';
@@ -12,6 +11,8 @@ import { addCurrency } from '../utils/addCurrency';
 
 const ProfilePage = () => {
   const { data: orders, isLoading, error } = useGetMyOrdersQuery();
+
+  console.log('Orders:', orders); 
 
   return (
     <>
@@ -29,6 +30,8 @@ const ProfilePage = () => {
             <Message variant="danger">
               {error?.data?.message || error.error}
             </Message>
+          ) : !orders || orders.length === 0 ? (
+            <Message variant="info">No orders found</Message>
           ) : (
             <Table striped hover responsive size="sm">
               <thead>
@@ -42,9 +45,9 @@ const ProfilePage = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders?.map((order) => (
+                {orders.map((order) => (
                   <tr key={order._id}>
-                    <td>{order._id}</td>
+                    <td>{order._id || 'N/A'}</td>
                     <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                     <td>{addCurrency(order.totalPrice)}</td>
                     <td>
@@ -62,11 +65,17 @@ const ProfilePage = () => {
                       )}
                     </td>
                     <td>
-                      <LinkContainer to={`/order/${order._id}`}>
-                        <Button className="btn-sm" variant="info">
+                      {order._id ? (
+                        <LinkContainer to={`/order/${order._id}`}>
+                          <Button className="btn-sm" variant="info">
+                            Details
+                          </Button>
+                        </LinkContainer>
+                      ) : (
+                        <Button className="btn-sm" variant="info" disabled>
                           Details
                         </Button>
-                      </LinkContainer>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -19,6 +19,7 @@ import { BASE_URL } from '../constants';
 const OrderDetailsPage = () => {
   const { id: orderId } = useParams();
   const navigate = useNavigate();
+  console.log('Order ID from useParams:', orderId); // Debug log
   const { data: order, isLoading, error } = useGetOrderDetailsQuery(orderId, { skip: !orderId });
   const [payOrder, { isLoading: isPayOrderLoading }] = usePayOrderMutation();
   const [updateDeliver, { isLoading: isUpdateDeliverLoading }] = useUpdateDeliverMutation();
@@ -26,11 +27,11 @@ const OrderDetailsPage = () => {
   const { data: paymentConfig } = useGetPaymentConfigQuery();
   const [paymentMethod, setPaymentMethod] = useState('stripe');
 
-  // Load Stripe script
   useEffect(() => {
     if (!orderId) {
       toast.error('Invalid order ID');
       navigate('/profile');
+      return;
     }
 
     const stripeScript = document.createElement('script');
@@ -42,10 +43,8 @@ const OrderDetailsPage = () => {
     };
   }, [orderId, navigate]);
 
-  // Convert PKR to USD (approximate rate: 1 USD = 280 PKR)
   const convertToUSD = (pkrAmount) => Math.round(pkrAmount / 280 * 100);
 
-  // Stripe Payment
   const handleStripePayment = async () => {
     try {
       if (!paymentConfig?.stripePublishableKey) {
@@ -78,7 +77,6 @@ const OrderDetailsPage = () => {
     }
   };
 
-  // PayPal Payment
   const handlePayPalPayment = async () => {
     try {
       if (!paymentConfig?.paypalClientId) {
