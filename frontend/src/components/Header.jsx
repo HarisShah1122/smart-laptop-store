@@ -38,7 +38,7 @@ const Header = () => {
     >
       <Container>
         <LinkContainer to='/'>
-          <Navbar.Brand>MERN Shop</Navbar.Brand>
+          <Navbar.Brand>ERX Solutions</Navbar.Brand>
         </LinkContainer>
         <Navbar.Toggle aria-controls='basic-navbar-nav' />
         <Navbar.Collapse id='basic-navbar-nav'>

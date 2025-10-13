@@ -227,7 +227,7 @@ const resetPasswordRequest = async (req, res, next) => {
     const resetLink = `http://localhost:3000/reset-password/${user.id}/${token}`;
 
     await transporter.sendMail({
-      from: `"MERN Shop" ${process.env.EMAIL_FROM}`,
+      from: `"ERX Solutions" ${process.env.EMAIL_FROM}`,
       to: user.email,
       subject: "Password Reset",
       html: `<p>Hi ${user.name},</p><p>Click <a href="${resetLink}">${resetLink}</a> to reset your password.</p>`,

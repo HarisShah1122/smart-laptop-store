@@ -41,7 +41,7 @@ const OrderDetailsPage = () => {
         key: razorpayApiKey.razorpayKeyId,
         amount: razorpayData.amount,
         currency: razorpayData.currency,
-        name: 'MERN Shop',
+        name: 'ERX Solutions',
         description: 'Test Transaction',
         order_id: razorpayOrderId,
         handler: async response => {

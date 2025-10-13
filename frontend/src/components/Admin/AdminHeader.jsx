@@ -17,7 +17,7 @@ const AdminHeader = () => {
     >
       <Container fluid>
         <LinkContainer to='/admin/dashboard'>
-          <Navbar.Brand>MERN Shop Admin</Navbar.Brand>
+          <Navbar.Brand>Haris Shah Admin</Navbar.Brand>
         </LinkContainer>
         <Navbar.Toggle aria-controls='basic-navbar-nav' />
         <Navbar.Collapse id='basic-navbar-nav'>

@@ -12,7 +12,7 @@ const Meta = ({ title, description, keywords }) => {
 };
 
 Meta.defaultProps = {
-  title: 'MERN Shop | Buy Electronics Online',
+  title: 'ERX Solutions | Buy Electronics Online',
   description:
     'Browse and buy the latest electronic gadgets and devices on our online store. Find great deals on smartphones, laptops, and more. Fast shipping and secure payments.',
   keywords:
