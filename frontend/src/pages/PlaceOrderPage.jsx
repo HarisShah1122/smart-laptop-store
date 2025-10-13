@@ -7,7 +7,6 @@ import { clearCartItems } from '../slices/cartSlice';
 import { toast } from 'react-toastify';
 import Loader from '../components/Loader';
 import CheckoutSteps from '../components/CheckoutSteps';
-import { FaIndianRupeeSign } from 'react-icons/fa6';
 import Meta from '../components/Meta';
 import { addCurrency } from '../utils/addCurrency';
 
@@ -21,19 +20,22 @@ const PlaceOrderPage = () => {
     shippingPrice,
     totalPrice
   } = useSelector(state => state.cart);
+  const { userInfo } = useSelector(state => state.auth);
   const [createOrder, { isLoading }] = useCreateOrderMutation();
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!userInfo) {
+      navigate('/login');
+    }
     if (!shippingAddress) {
       navigate('/shipping');
     }
     if (!paymentMethod) {
       navigate('/payment');
     }
-  }, [shippingAddress, paymentMethod, navigate]);
+  }, [userInfo, shippingAddress, paymentMethod, navigate]);
 
   const placeOrderHandler = async () => {
     try {
@@ -52,6 +54,7 @@ const PlaceOrderPage = () => {
       toast.error(error?.data?.message || error.error);
     }
   };
+
   return (
     <>
       <CheckoutSteps step1 step2 step3 step4 />
@@ -60,17 +63,17 @@ const PlaceOrderPage = () => {
         <Col md={8}>
           <ListGroup variant='flush'>
             <ListGroup.Item>
-              <h2>Shipping </h2>
+              <h2>Shipping</h2>
               <strong>Address:</strong> {shippingAddress.address},{' '}
               {shippingAddress.city}, {shippingAddress.postalCode},{' '}
               {shippingAddress.country}
             </ListGroup.Item>
             <ListGroup.Item>
-              <h2>Payment Method </h2>
+              <h2>Payment Method</h2>
               <strong>Method:</strong> {paymentMethod}
             </ListGroup.Item>
             <ListGroup.Item>
-              <h2>Order Items </h2>
+              <h2>Order Items</h2>
               <ListGroup variant='flush'>
                 {cartItems.map(item => (
                   <ListGroup.Item key={item._id}>

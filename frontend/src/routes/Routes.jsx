@@ -16,8 +16,6 @@ import AdminRoute from '../components/AdminRoute';
 import OrderListPage from '../pages/admin/OrderListPage';
 import ProductListPage from '../pages/admin/ProductListPage';
 import UserListPage from '../pages/admin/UserListPage';
-// import CreateProductPage from '../pages/admin/CreateProductPage';
-// import UpdateProductPage from '../pages/admin/UpdateProductPage';
 import ProductFormPage from '../pages/admin/ProductFormPage';
 import UpdateUserFormPage from '../pages/admin/UpdateUserFormPage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -28,6 +26,8 @@ import AdminProfilePage from '../pages/admin/AdminProfilePage';
 import AdminListPage from '../pages/admin/AdminListPage';
 import ResetPasswordRequestPage from '../pages/ResetPasswordRequestPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
+import SuccessPage from '../pages/SuccessPage'; // Import SuccessPage
+import CancelPage from '../pages/CancelPage'; // Import CancelPage
 
 const router = createBrowserRouter([
   {
@@ -86,6 +86,14 @@ const router = createBrowserRouter([
           {
             path: '/profile',
             element: <ProfilePage />
+          },
+          {
+            path: '/order/success',
+            element: <SuccessPage />
+          },
+          {
+            path: '/order/cancel',
+            element: <CancelPage />
           }
         ]
       }
@@ -152,6 +160,7 @@ const router = createBrowserRouter([
     element: <NotFoundPage />
   }
 ]);
+
 const Routes = () => {
   return <RouterProvider router={router} />;
 };

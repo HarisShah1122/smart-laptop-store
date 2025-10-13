@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Row, Col, ListGroup, Button, Image, Card } from 'react-bootstrap';
 import {
   useGetOrderDetailsQuery,
   usePayOrderMutation,
   useUpdateDeliverMutation,
-  useGetRazorpayApiKeyQuery
+  useGetPaymentConfigQuery
 } from '../slices/ordersApiSlice';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { FaIndianRupeeSign } from 'react-icons/fa6';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
 import Meta from '../components/Meta';
@@ -19,79 +18,89 @@ import { BASE_URL } from '../constants';
 
 const OrderDetailsPage = () => {
   const { id: orderId } = useParams();
-  const { data: order, isLoading, error } = useGetOrderDetailsQuery(orderId);
+  const navigate = useNavigate();
+  const { data: order, isLoading, error } = useGetOrderDetailsQuery(orderId, { skip: !orderId });
   const [payOrder, { isLoading: isPayOrderLoading }] = usePayOrderMutation();
   const [updateDeliver, { isLoading: isUpdateDeliverLoading }] = useUpdateDeliverMutation();
   const { userInfo } = useSelector(state => state.auth);
-  const { data: razorpayApiKey } = useGetRazorpayApiKeyQuery();
-  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // default Razorpay
+  const { data: paymentConfig } = useGetPaymentConfigQuery();
+  const [paymentMethod, setPaymentMethod] = useState('stripe');
 
-  // === Razorpay Payment ===
-  const handleRazorpayPayment = async () => {
-    try {
-      const razorpayData = {
-        amount: order.totalPrice * 100,
-        currency: 'INR',
-        receipt: `receipt#${orderId}`,
-      };
-      const { data } = await axios.post(`${BASE_URL}/api/v1/payment/razorpay/order`, razorpayData);
-      const { id: razorpayOrderId } = data;
-
-      const options = {
-        key: razorpayApiKey.razorpayKeyId,
-        amount: razorpayData.amount,
-        currency: razorpayData.currency,
-        name: 'ERX Solutions',
-        description: 'Test Transaction',
-        order_id: razorpayOrderId,
-        handler: async response => {
-          const { data } = await axios.post(`${BASE_URL}/api/v1/payment/razorpay/order/validate`, response);
-          const details = { ...data, email: order?.user?.email };
-          await payOrder({ orderId, details });
-          toast.success(data.message);
-        },
-        prefill: {
-          name: order?.user?.name,
-          email: order?.user?.email,
-        },
-        theme: {
-          color: '#FFC107',
-        },
-      };
-
-      const rzp1 = new window.Razorpay(options);
-      rzp1.open();
-    } catch (error) {
-      toast.error(error?.data?.message || error.error);
+  // Load Stripe script
+  useEffect(() => {
+    if (!orderId) {
+      toast.error('Invalid order ID');
+      navigate('/profile');
     }
-  };
 
-  // === Stripe Payment ===
+    const stripeScript = document.createElement('script');
+    stripeScript.src = 'https://js.stripe.com/v3/';
+    stripeScript.async = true;
+    document.body.appendChild(stripeScript);
+    return () => {
+      document.body.removeChild(stripeScript);
+    };
+  }, [orderId, navigate]);
+
+  // Convert PKR to USD (approximate rate: 1 USD = 280 PKR)
+  const convertToUSD = (pkrAmount) => Math.round(pkrAmount / 280 * 100);
+
+  // Stripe Payment
   const handleStripePayment = async () => {
     try {
-      const { data } = await axios.post(`${BASE_URL}/api/v1/payment/stripe/create-payment-intent`, {
-        amount: order.totalPrice * 100,
-        currency: 'usd',
-      });
+      if (!paymentConfig?.stripePublishableKey) {
+        throw new Error('Stripe configuration not loaded');
+      }
 
-      const stripe = window.Stripe(data.publishableKey);
-      await stripe.redirectToCheckout({ sessionId: data.sessionId });
+      const { data } = await axios.post(
+        `${BASE_URL}/api/v1/payment/order`,
+        {
+          amount: convertToUSD(order.totalPrice),
+          currency: 'usd',
+          provider: 'stripe',
+          orderId,
+        },
+        {
+          headers: { Authorization: `Bearer ${userInfo.token}` }
+        }
+      );
+
+      const stripe = window.Stripe(paymentConfig.stripePublishableKey);
+      if (!stripe) {
+        throw new Error('Stripe.js failed to load');
+      }
+
+      await stripe.redirectToCheckout({
+        sessionId: data.id,
+      });
     } catch (error) {
-      toast.error(error?.data?.message || error.error);
+      toast.error(error?.data?.message || error.message || 'Stripe payment failed');
     }
   };
 
-  // === PayPal Payment ===
+  // PayPal Payment
   const handlePayPalPayment = async () => {
     try {
-      const { data } = await axios.post(`${BASE_URL}/api/v1/payment/paypal/create-order`, {
-        amount: order.totalPrice,
-        currency: 'USD',
-      });
+      if (!paymentConfig?.paypalClientId) {
+        throw new Error('PayPal configuration not loaded');
+      }
 
-      window.location.href = data.approvalUrl; // redirect to PayPal checkout
+      const { data } = await axios.post(
+        `${BASE_URL}/api/v1/payment/order`,
+        {
+          amount: convertToUSD(order.totalPrice),
+          currency: 'usd',
+          provider: 'paypal',
+          orderId,
+        },
+        {
+          headers: { Authorization: `Bearer ${userInfo.token}` }
+        }
+      );
+
+      window.location.href = data.approvalUrl;
     } catch (error) {
-      toast.error(error?.data?.message || error.error);
+      toast.error(error?.data?.message || error.message || 'PayPal payment failed');
     }
   };
 
@@ -105,8 +114,7 @@ const OrderDetailsPage = () => {
   };
 
   const handlePayment = () => {
-    if (paymentMethod === 'razorpay') handleRazorpayPayment();
-    else if (paymentMethod === 'stripe') handleStripePayment();
+    if (paymentMethod === 'stripe') handleStripePayment();
     else if (paymentMethod === 'paypal') handlePayPalPayment();
   };
 
@@ -116,6 +124,8 @@ const OrderDetailsPage = () => {
         <Loader />
       ) : error ? (
         <Message variant='danger'>{error?.data?.message || error.error}</Message>
+      ) : !order ? (
+        <Message variant='danger'>Order not found</Message>
       ) : (
         <>
           <Meta title={'Order Details'} />
@@ -187,29 +197,26 @@ const OrderDetailsPage = () => {
                     <Row><Col>Total:</Col><Col>{addCurrency(order?.totalPrice)}</Col></Row>
                   </ListGroup.Item>
 
-                  {!order?.isPaid && !userInfo.isAdmin && (
-                    <>
-                      <ListGroup.Item>
-                        <h5>Select Payment Method:</h5>
-                        <select
-                          className='form-select mb-3'
-                          value={paymentMethod}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                        >
-                          <option value='razorpay'>Razorpay</option>
-                          <option value='stripe'>Stripe</option>
-                          <option value='paypal'>PayPal</option>
-                        </select>
-                        <Button
-                          className='w-100'
-                          variant='warning'
-                          onClick={handlePayment}
-                          disabled={isPayOrderLoading}
-                        >
-                          Pay with {paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}
-                        </Button>
-                      </ListGroup.Item>
-                    </>
+                  {!order?.isPaid && !userInfo?.isAdmin && (
+                    <ListGroup.Item>
+                      <h5>Select Payment Method:</h5>
+                      <select
+                        className='form-select mb-3'
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      >
+                        <option value='stripe'>Stripe</option>
+                        <option value='paypal'>PayPal</option>
+                      </select>
+                      <Button
+                        className='w-100'
+                        variant='warning'
+                        onClick={handlePayment}
+                        disabled={isPayOrderLoading || !paymentConfig}
+                      >
+                        Pay with {paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1)}
+                      </Button>
+                    </ListGroup.Item>
                   )}
 
                   {userInfo?.isAdmin && order?.isPaid && !order?.isDelivered && (

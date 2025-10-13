@@ -1,4 +1,4 @@
-import { ORDERS_URL, RAZORPAY_URL, STRIPE_URL, PAYPAL_URL } from '../constants';
+import { ORDERS_URL } from '../constants';
 import { apiSlice } from './apiSlice';
 
 export const ordersApiSlice = apiSlice.injectEndpoints({
@@ -43,26 +43,9 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: ['Order']
     }),
 
-    // Razorpay Config
-    getRazorpayApiKey: builder.query({
+    getPaymentConfig: builder.query({
       query: () => ({
-        url: `${RAZORPAY_URL}/razorpay/config`
-      }),
-      providesTags: ['Order']
-    }),
-
-    // Stripe Config
-    getStripeApiKey: builder.query({
-      query: () => ({
-        url: `${STRIPE_URL}/config`
-      }),
-      providesTags: ['Order']
-    }),
-
-    // PayPal Config
-    getPayPalApiKey: builder.query({
-      query: () => ({
-        url: `${PAYPAL_URL}/config`
+        url: '/api/v1/payment/config'
       }),
       providesTags: ['Order']
     }),
@@ -81,9 +64,7 @@ export const {
   useCreateOrderMutation,
   usePayOrderMutation,
   useUpdateDeliverMutation,
-  useGetRazorpayApiKeyQuery,
-  useGetStripeApiKeyQuery,
-  useGetPayPalApiKeyQuery,
+  useGetPaymentConfigQuery,
   useGetMyOrdersQuery,
   useGetOrdersQuery
 } = ordersApiSlice;
