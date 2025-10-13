@@ -17,12 +17,13 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
     }),
 
     getOrderDetails: builder.query({
-      query: orderId => ({
-        url: `${ORDERS_URL}/${orderId}`
-      }),
+      query: orderId => {
+        console.log('API Slice orderId:', orderId, 'Type:', typeof orderId); // Debug log
+        return { url: `${ORDERS_URL}/${orderId}` };
+      },
       transformResponse: response => ({
         ...response,
-        _id: response.id 
+        _id: response._id || response.id // Consistent fallback
       }),
       providesTags: ['Order']
     }),
@@ -34,7 +35,7 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       transformResponse: response =>
         response.map(order => ({
           ...order,
-          _id: order.id 
+          _id: order._id || order.id
         })),
       providesTags: ['Order']
     }),
@@ -70,7 +71,7 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
       transformResponse: response =>
         response.map(order => ({
           ...order,
-          _id: order.id 
+          _id: order._id || order.id
         })),
       providesTags: ['Order']
     })

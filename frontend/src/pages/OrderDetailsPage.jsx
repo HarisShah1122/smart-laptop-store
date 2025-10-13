@@ -19,7 +19,7 @@ import { BASE_URL } from '../constants';
 const OrderDetailsPage = () => {
   const { id: orderId } = useParams();
   const navigate = useNavigate();
-  console.log('Order ID from useParams:', orderId); // Debug log
+  console.log('Order ID from useParams:', orderId, 'Type:', typeof orderId); // Debug log
   const { data: order, isLoading, error } = useGetOrderDetailsQuery(orderId, { skip: !orderId });
   const [payOrder, { isLoading: isPayOrderLoading }] = usePayOrderMutation();
   const [updateDeliver, { isLoading: isUpdateDeliverLoading }] = useUpdateDeliverMutation();
@@ -42,6 +42,12 @@ const OrderDetailsPage = () => {
       document.body.removeChild(stripeScript);
     };
   }, [orderId, navigate]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error?.data?.message || error.message || 'Failed to fetch order details');
+    }
+  }, [error]);
 
   const convertToUSD = (pkrAmount) => Math.round(pkrAmount / 280 * 100);
 
@@ -107,7 +113,7 @@ const OrderDetailsPage = () => {
       await updateDeliver(orderId);
       toast.success('Order Delivered');
     } catch (error) {
-      toast.error(error?.data?.message || error.error);
+      toast.error(error?.data?.message || error.error || 'Failed to mark as delivered');
     }
   };
 
@@ -121,13 +127,13 @@ const OrderDetailsPage = () => {
       {isLoading ? (
         <Loader />
       ) : error ? (
-        <Message variant='danger'>{error?.data?.message || error.error}</Message>
+        <Message variant='danger'>{error?.data?.message || error.message || 'Failed to fetch order'}</Message>
       ) : !order ? (
         <Message variant='danger'>Order not found</Message>
       ) : (
         <>
-          <Meta title={'Order Details'} />
-          <h1>Order ID: {orderId}</h1>
+          <Meta title={`Order ${orderId}`} />
+          <h1>Order ID: {order._id}</h1>
           <Row>
             <Col md={8}>
               <ListGroup variant='flush'>
@@ -135,7 +141,10 @@ const OrderDetailsPage = () => {
                   <h2>Shipping</h2>
                   <p><strong>Name:</strong> {order?.user?.name}</p>
                   <p><strong>Email:</strong> {order?.user?.email}</p>
-                  <p><strong>Address:</strong> {order?.shippingAddress?.address}, {order?.shippingAddress?.city}, {order?.shippingAddress?.postalCode}, {order?.shippingAddress?.country}</p>
+                  <p>
+                    <strong>Address:</strong> {order?.shippingAddress?.address}, {order?.shippingAddress?.city},{' '}
+                    {order?.shippingAddress?.postalCode}, {order?.shippingAddress?.country}
+                  </p>
                   {order?.isDelivered ? (
                     <Message variant='success'>
                       Delivered on {new Date(order?.deliveredAt).toLocaleString()}
@@ -160,14 +169,18 @@ const OrderDetailsPage = () => {
                 <ListGroup.Item>
                   <h2>Order Items</h2>
                   <ListGroup variant='flush'>
-                    {order?.orderItems?.map(item => (
-                      <ListGroup.Item key={item._id}>
+                    {order?.orderItems?.map((item, index) => (
+                      <ListGroup.Item key={index}>
                         <Row>
                           <Col md={2}>
                             <Image src={item.image} alt={item.name} fluid rounded />
                           </Col>
                           <Col md={6}>
-                            <Link to={`/product/${item._id}`} className='text-dark' style={{ textDecoration: 'none' }}>
+                            <Link
+                              to={`/product/${item.productId}`} // Use productId
+                              className='text-dark'
+                              style={{ textDecoration: 'none' }}
+                            >
                               {item.name}
                             </Link>
                           </Col>

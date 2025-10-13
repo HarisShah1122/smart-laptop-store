@@ -2,10 +2,44 @@ import { Order } from "../models/orderModel.js";
 import { User } from "../models/userModel.js";
 import asyncHandler from 'express-async-handler';
 
-// @desc     Create new order
-// @method   POST
-// @endpoint /api/v1/orders
+// @desc     Get order by ID
+// @method   GET
+// @endpoint /api/v1/orders/:id
 // @access   Private
+const getOrderById = asyncHandler(async (req, res, next) => {
+  try {
+    const { id: orderId } = req.params;
+    console.log('Received orderId:', orderId, 'Type:', typeof orderId); // Debug log
+
+    // Validate orderId
+    const parsedOrderId = parseInt(orderId, 10);
+    if (isNaN(parsedOrderId) || parsedOrderId <= 0) {
+      res.statusCode = 400;
+      throw new Error('Invalid order ID: must be a positive number');
+    }
+
+    const order = await Order.findByPk(parsedOrderId, {
+      include: [{ model: User, attributes: ['id', 'name', 'email'] }]
+    });
+
+    if (!order) {
+      res.statusCode = 404;
+      throw new Error('Order not found');
+    }
+
+    console.log('Fetched Order:', order.dataValues); // Debug log
+
+    res.status(200).json({
+      ...order.dataValues,
+      _id: order.id
+    });
+  } catch (error) {
+    console.error('Order fetch error:', error);
+    next(error);
+  }
+});
+
+// Other endpoints (addOrderItems, getMyOrders, etc.) remain unchanged
 const addOrderItems = asyncHandler(async (req, res, next) => {
   try {
     const {
@@ -64,10 +98,6 @@ const addOrderItems = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc     Get logged-in user orders
-// @method   GET
-// @endpoint /api/v1/orders/my-orders
-// @access   Private
 const getMyOrders = asyncHandler(async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
@@ -93,41 +123,6 @@ const getMyOrders = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc     Get order by ID
-// @method   GET
-// @endpoint /api/v1/orders/:id
-// @access   Private
-const getOrderById = asyncHandler(async (req, res, next) => {
-  try {
-    const { id: orderId } = req.params;
-
-    if (!orderId || orderId === 'undefined') {
-      res.statusCode = 400;
-      throw new Error('Invalid order ID');
-    }
-
-    const order = await Order.findByPk(orderId, {
-      include: [{ model: User, attributes: ['id', 'name', 'email'] }]
-    });
-
-    if (!order) {
-      res.statusCode = 404;
-      throw new Error('Order not found!');
-    }
-
-    res.status(200).json({
-      ...order.dataValues,
-      _id: order.id
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// @desc     Update order to paid
-// @method   PUT
-// @endpoint /api/v1/orders/:id/pay
-// @access   Private
 const updateOrderToPaid = asyncHandler(async (req, res, next) => {
   try {
     const { id: orderId } = req.params;
@@ -158,10 +153,6 @@ const updateOrderToPaid = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc     Update order to delivered
-// @method   PUT
-// @endpoint /api/v1/orders/:id/deliver
-// @access   Private/Admin
 const updateOrderToDeliver = asyncHandler(async (req, res, next) => {
   try {
     const { id: orderId } = req.params;
@@ -186,10 +177,6 @@ const updateOrderToDeliver = asyncHandler(async (req, res, next) => {
   }
 });
 
-// @desc     Get all orders
-// @method   GET
-// @endpoint /api/v1/orders
-// @access   Private/Admin
 const getOrders = asyncHandler(async (req, res, next) => {
   try {
     const orders = await Order.findAll({

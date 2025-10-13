@@ -11,7 +11,7 @@ const Order = sequelize.define(
       primaryKey: true
     },
     userId: {
-      type: DataTypes.UUID, 
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: 'Users',
@@ -71,7 +71,6 @@ const Order = sequelize.define(
   { timestamps: true }
 );
 
-// Associations
 Order.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE' });
 
 export { Order };
