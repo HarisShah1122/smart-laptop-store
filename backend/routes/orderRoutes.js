@@ -15,13 +15,28 @@ const router = express.Router();
 
 const validator = {
   getOrderById: [
-    param('id').notEmpty().withMessage('Id is required').isMongoId().withMessage('Invalid Id Format')
+    param('id')
+  .notEmpty()
+  .withMessage('Order ID is required')
+  .isInt({ min: 1 })
+  .withMessage('Invalid Order ID (must be a number)')
+
   ],
   updateOrderToPaid: [
-    param('id').notEmpty().withMessage('Id is required').isMongoId().withMessage('Invalid Id Format')
+   param('id')
+  .notEmpty()
+  .withMessage('Order ID is required')
+  .isInt({ min: 1 })
+  .withMessage('Invalid Order ID (must be a number)')
+
   ],
   updateOrderToDeliver: [
-    param('id').notEmpty().withMessage('Id is required').isMongoId().withMessage('Invalid Id Format')
+    param('id')
+  .notEmpty()
+  .withMessage('Order ID is required')
+  .isInt({ min: 1 })
+  .withMessage('Invalid Order ID (must be a number)')
+
   ],
   addOrderItems: [
     check('cartItems').notEmpty().withMessage('Cart items are required'),

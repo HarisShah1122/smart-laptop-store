@@ -18,10 +18,12 @@ const Order = sequelize.define(
         key: 'id'
       }
     },
-    orderItems: {
-      type: DataTypes.JSON,
-      allowNull: false
+      orderItems: {
+      type: DataTypes.JSONB,  
+      allowNull: false,
+      defaultValue: []  
     },
+
     paymentMethod: {
       type: DataTypes.STRING,
       allowNull: false

@@ -26,8 +26,8 @@ import AdminProfilePage from '../pages/admin/AdminProfilePage';
 import AdminListPage from '../pages/admin/AdminListPage';
 import ResetPasswordRequestPage from '../pages/ResetPasswordRequestPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
-import SuccessPage from '../pages/SuccessPage'; // Import SuccessPage
-import CancelPage from '../pages/CancelPage'; // Import CancelPage
+import SuccessPage from '../pages/SuccessPage'; 
+import CancelPage from '../pages/CancelPage'; 
 
 const router = createBrowserRouter([
   {

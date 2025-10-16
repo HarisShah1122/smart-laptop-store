@@ -76,7 +76,9 @@ const addOrderItems = asyncHandler(async (req, res, next) => {
       res.statusCode = 401;
       throw new Error('User not authenticated');
     }
-
+    const orderItems = Array.isArray(req.body.cartItems)
+      ? req.body.cartItems
+      : [req.body.cartItems]; 
     const order = await Order.create({
       userId: req.user.id,
       orderItems: cartItems.map(item => ({

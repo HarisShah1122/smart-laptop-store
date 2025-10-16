@@ -21,11 +21,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-// Set CSP headers
+// CSP header – Stripe only
 app.use((req, res, next) => {
   res.setHeader(
-    'Content-Security-Policy',
-    "script-src-elem 'self' https://js.stripe.com; script-src 'self' https://js.stripe.com; connect-src 'self' http://localhost:5000 ws://localhost:5000 https://api.stripe.com; default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
+    "Content-Security-Policy",
+    "default-src 'self'; " +
+      "script-src 'self' https://js.stripe.com; " +
+      "script-src-elem 'self' https://js.stripe.com; " +
+      "frame-src 'self' https://js.stripe.com; " +
+      "connect-src 'self' https://api.stripe.com http://localhost:5000; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "img-src 'self' data: blob:; " +
+      "font-src 'self';"
   );
   next();
 });

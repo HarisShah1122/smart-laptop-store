@@ -19,11 +19,11 @@ import { BASE_URL } from '../constants';
 const OrderDetailsPage = () => {
   const { id: orderId } = useParams();
   const navigate = useNavigate();
-  console.log('Order ID from useParams:', orderId, 'Type:', typeof orderId); // Debug log
+
   const { data: order, isLoading, error } = useGetOrderDetailsQuery(orderId, { skip: !orderId });
   const [payOrder, { isLoading: isPayOrderLoading }] = usePayOrderMutation();
   const [updateDeliver, { isLoading: isUpdateDeliverLoading }] = useUpdateDeliverMutation();
-  const { userInfo } = useSelector(state => state.auth);
+  const { userInfo } = useSelector((state) => state.auth);
   const { data: paymentConfig } = useGetPaymentConfigQuery();
   const [paymentMethod, setPaymentMethod] = useState('stripe');
 
@@ -38,6 +38,7 @@ const OrderDetailsPage = () => {
     stripeScript.src = 'https://js.stripe.com/v3/';
     stripeScript.async = true;
     document.body.appendChild(stripeScript);
+
     return () => {
       document.body.removeChild(stripeScript);
     };
@@ -45,57 +46,45 @@ const OrderDetailsPage = () => {
 
   useEffect(() => {
     if (error) {
-      console.error('Order fetch error in frontend:', error); // Debug log
+      console.error('Order fetch error:', error);
       toast.error(error?.data?.message || error.message || 'Failed to fetch order details');
     }
   }, [error]);
 
-  const convertToUSD = (pkrAmount) => Math.round(pkrAmount / 280 * 100);
+  const convertToUSD = (pkrAmount) => Math.round((pkrAmount / 280) * 100);
 
   const handleStripePayment = async () => {
-  try {
-    // ✅ Get the publishable key from backend or environment
-    const publishableKey =
-      paymentConfig?.stripePublishableKey || process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+    try {
+      const publishableKey =
+        paymentConfig?.stripePublishableKey || process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
 
-    if (!publishableKey) throw new Error('Stripe publishable key missing');
+      if (!publishableKey) throw new Error('Stripe publishable key missing');
 
-    // ✅ Create Stripe checkout session from backend
-    const { data } = await axios.post(
-      `${BASE_URL}/api/v1/payment/order`,
-      {
-        amount: convertToUSD(order.totalPrice),
-        currency: 'usd',
-        provider: 'stripe',
-        orderId,
-      },
-      {
-        headers: { Authorization: `Bearer ${userInfo.token}` },
-      }
-    );
+      const { data } = await axios.post(
+        `${BASE_URL}/api/v1/payment/order`,
+        {
+          amount: convertToUSD(order.totalPrice),
+          currency: 'usd',
+          provider: 'stripe',
+          orderId
+        },
+        {
+          headers: { Authorization: `Bearer ${userInfo.token}` }
+        }
+      );
 
-    // ✅ Initialize Stripe.js
-    const stripe = window.Stripe(publishableKey);
+      const stripe = window.Stripe(publishableKey);
+      if (!stripe) throw new Error('Stripe.js failed to load');
 
-    if (!stripe) {
-      throw new Error('Stripe.js failed to load');
+      await stripe.redirectToCheckout({ sessionId: data.id });
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message || 'Stripe payment failed');
     }
-
-    // ✅ Redirect user to Stripe checkout
-    await stripe.redirectToCheckout({
-      sessionId: data.id,
-    });
-  } catch (error) {
-    toast.error(error?.response?.data?.message || error.message || 'Stripe payment failed');
-  }
-};
-
+  };
 
   const handlePayPalPayment = async () => {
     try {
-      if (!paymentConfig?.paypalClientId) {
-        throw new Error('PayPal configuration not loaded');
-      }
+      if (!paymentConfig?.paypalClientId) throw new Error('PayPal configuration not loaded');
 
       const { data } = await axios.post(
         `${BASE_URL}/api/v1/payment/order`,
@@ -103,7 +92,7 @@ const OrderDetailsPage = () => {
           amount: convertToUSD(order.totalPrice),
           currency: 'usd',
           provider: 'paypal',
-          orderId,
+          orderId
         },
         {
           headers: { Authorization: `Bearer ${userInfo.token}` }
@@ -135,69 +124,83 @@ const OrderDetailsPage = () => {
       {isLoading ? (
         <Loader />
       ) : error ? (
-        <Message variant='danger'>{error?.data?.message || error.message || 'Failed to fetch order'}</Message>
+        <Message variant="danger">
+          {error?.data?.message || error.message || 'Failed to fetch order'}
+        </Message>
       ) : !order ? (
-        <Message variant='danger'>Order not found</Message>
+        <Message variant="danger">Order not found</Message>
       ) : (
         <>
           <Meta title={`Order ${orderId}`} />
           <h1>Order ID: {order._id}</h1>
           <Row>
             <Col md={8}>
-              <ListGroup variant='flush'>
+              <ListGroup variant="flush">
                 <ListGroup.Item>
                   <h2>Shipping</h2>
-                  <p><strong>Name:</strong> {order?.user?.name}</p>
-                  <p><strong>Email:</strong> {order?.user?.email}</p>
                   <p>
-                    <strong>Address:</strong> {order?.shippingAddress?.address}, {order?.shippingAddress?.city},{' '}
+                    <strong>Name:</strong> {order?.user?.name}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {order?.user?.email}
+                  </p>
+                  <p>
+                    <strong>Address:</strong>{' '}
+                    {order?.shippingAddress?.address}, {order?.shippingAddress?.city},{' '}
                     {order?.shippingAddress?.postalCode}, {order?.shippingAddress?.country}
                   </p>
                   {order?.isDelivered ? (
-                    <Message variant='success'>
+                    <Message variant="success">
                       Delivered on {new Date(order?.deliveredAt).toLocaleString()}
                     </Message>
                   ) : (
-                    <Message variant='danger'>Not Delivered</Message>
+                    <Message variant="danger">Not Delivered</Message>
                   )}
                 </ListGroup.Item>
 
                 <ListGroup.Item>
                   <h2>Payment Method</h2>
-                  <p><strong>Method:</strong> {order?.paymentMethod}</p>
+                  <p>
+                    <strong>Method:</strong> {order?.paymentMethod}
+                  </p>
                   {order?.isPaid ? (
-                    <Message variant='success'>
+                    <Message variant="success">
                       Paid on {new Date(order?.paidAt).toLocaleString()}
                     </Message>
                   ) : (
-                    <Message variant='danger'>Not Paid</Message>
+                    <Message variant="danger">Not Paid</Message>
                   )}
                 </ListGroup.Item>
 
                 <ListGroup.Item>
                   <h2>Order Items</h2>
-                  <ListGroup variant='flush'>
-                    {order?.orderItems?.map((item, index) => (
-                      <ListGroup.Item key={index}>
-                        <Row>
-                          <Col md={2}>
-                            <Image src={item.image} alt={item.name} fluid rounded />
-                          </Col>
-                          <Col md={6}>
-                            <Link
-                              to={`/product/${item.productId}`}
-                              className='text-dark'
-                              style={{ textDecoration: 'none' }}
-                            >
-                              {item.name}
-                            </Link>
-                          </Col>
-                          <Col md={4}>
-                            {item.qty} x {addCurrency(item.price)} = {addCurrency(item.qty * item.price)}
-                          </Col>
-                        </Row>
-                      </ListGroup.Item>
-                    ))}
+                  <ListGroup variant="flush">
+                    {Array.isArray(order?.orderItems) && order.orderItems.length > 0 ? (
+                      order.orderItems.map((item, index) => (
+                        <ListGroup.Item key={index}>
+                          <Row>
+                            <Col md={2}>
+                              <Image src={item.image} alt={item.name} fluid rounded />
+                            </Col>
+                            <Col md={6}>
+                              <Link
+                                to={`/product/${item.productId}`}
+                                className="text-dark"
+                                style={{ textDecoration: 'none' }}
+                              >
+                                {item.name}
+                              </Link>
+                            </Col>
+                            <Col md={4}>
+                              {item.qty} x {addCurrency(item.price)} ={' '}
+                              {addCurrency(item.qty * item.price)}
+                            </Col>
+                          </Row>
+                        </ListGroup.Item>
+                      ))
+                    ) : (
+                      <ListGroup.Item>No order items found.</ListGroup.Item>
+                    )}
                   </ListGroup>
                 </ListGroup.Item>
               </ListGroup>
@@ -205,31 +208,43 @@ const OrderDetailsPage = () => {
 
             <Col md={4}>
               <Card>
-                <ListGroup variant='flush'>
+                <ListGroup variant="flush">
                   <ListGroup.Item>
                     <h2>Order Summary</h2>
                   </ListGroup.Item>
                   <ListGroup.Item>
-                    <Row><Col>Items:</Col><Col>{addCurrency(order?.itemsPrice)}</Col></Row>
-                    <Row><Col>Shipping:</Col><Col>{addCurrency(order?.shippingPrice)}</Col></Row>
-                    <Row><Col>Tax:</Col><Col>{addCurrency(order?.taxPrice)}</Col></Row>
-                    <Row><Col>Total:</Col><Col>{addCurrency(order?.totalPrice)}</Col></Row>
+                    <Row>
+                      <Col>Items:</Col>
+                      <Col>{addCurrency(order?.itemsPrice)}</Col>
+                    </Row>
+                    <Row>
+                      <Col>Shipping:</Col>
+                      <Col>{addCurrency(order?.shippingPrice)}</Col>
+                    </Row>
+                    <Row>
+                      <Col>Tax:</Col>
+                      <Col>{addCurrency(order?.taxPrice)}</Col>
+                    </Row>
+                    <Row>
+                      <Col>Total:</Col>
+                      <Col>{addCurrency(order?.totalPrice)}</Col>
+                    </Row>
                   </ListGroup.Item>
 
                   {!order?.isPaid && !userInfo?.isAdmin && (
                     <ListGroup.Item>
                       <h5>Select Payment Method:</h5>
                       <select
-                        className='form-select mb-3'
+                        className="form-select mb-3"
                         value={paymentMethod}
                         onChange={(e) => setPaymentMethod(e.target.value)}
                       >
-                        <option value='stripe'>Stripe</option>
-                        <option value='paypal'>PayPal</option>
+                        <option value="stripe">Stripe</option>
+                        <option value="paypal">PayPal</option>
                       </select>
                       <Button
-                        className='w-100'
-                        variant='warning'
+                        className="w-100"
+                        variant="warning"
                         onClick={handlePayment}
                         disabled={isPayOrderLoading || !paymentConfig}
                       >
@@ -242,7 +257,7 @@ const OrderDetailsPage = () => {
                     <ListGroup.Item>
                       <Button
                         onClick={deliveredHandler}
-                        variant='warning'
+                        variant="warning"
                         disabled={isUpdateDeliverLoading}
                       >
                         Mark As Delivered

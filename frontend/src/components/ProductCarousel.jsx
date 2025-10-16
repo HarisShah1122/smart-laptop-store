@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { Carousel, Image } from 'react-bootstrap';
 import { useGetTopProductsQuery } from '../slices/productsApiSlice';
 import { addCurrency } from '../utils/addCurrency';
-import Loader from './Loader';
-import Message from './Message';
 
 const ProductCarousel = () => {
   const { data: products } = useGetTopProductsQuery();
@@ -19,7 +17,7 @@ const ProductCarousel = () => {
               fluid
               style={{ height: '500px' }}
             />
-            <Carousel.Caption className='pb-5 px-5 '>
+            <Carousel.Caption className='pb-5 px-5'>
               <h3 className='product-title'>{product.name}</h3>
               <h1>{addCurrency(product.price)}</h1>
             </Carousel.Caption>

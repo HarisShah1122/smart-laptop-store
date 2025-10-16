@@ -1,7 +1,6 @@
-// Product.jsx (already updated)
-import React, { useState } from 'react';
+import React from 'react';
 import { Button, Card } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { addCurrency } from '../utils/addCurrency';
 import { addToCart } from '../slices/cartSlice';
@@ -9,9 +8,7 @@ import Rating from './Rating';
 import { toast } from 'react-toastify';
 
 const Product = ({ product }) => {
-  const [qty, setQty] = useState(1);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   // Debug: Log product data
   console.log('Product data:', product);
@@ -23,7 +20,7 @@ const Product = ({ product }) => {
   }
 
   const addToCartHandler = () => {
-    dispatch(addToCart({ ...product, qty }));
+    dispatch(addToCart({ ...product, qty: 1 }));
     toast.success('Added to cart!');
   };
 

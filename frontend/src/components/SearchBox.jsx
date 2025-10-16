@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Form,
-  Button,
-  InputGroup,
-  OverlayTrigger,
-  Tooltip
-} from 'react-bootstrap';
+import { Form, Button, InputGroup } from 'react-bootstrap';
 import { FaSearch, FaTimes } from 'react-icons/fa';
 import { useDispatch } from 'react-redux';
 import { searchProduct, clearSearch } from '../slices/searchProductSlice';
