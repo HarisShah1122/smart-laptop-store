@@ -53,36 +53,43 @@ const OrderDetailsPage = () => {
   const convertToUSD = (pkrAmount) => Math.round(pkrAmount / 280 * 100);
 
   const handleStripePayment = async () => {
-    try {
-      if (!paymentConfig?.stripePublishableKey) {
-        throw new Error('Stripe configuration not loaded');
+  try {
+    // ✅ Get the publishable key from backend or environment
+    const publishableKey =
+      paymentConfig?.stripePublishableKey || process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+
+    if (!publishableKey) throw new Error('Stripe publishable key missing');
+
+    // ✅ Create Stripe checkout session from backend
+    const { data } = await axios.post(
+      `${BASE_URL}/api/v1/payment/order`,
+      {
+        amount: convertToUSD(order.totalPrice),
+        currency: 'usd',
+        provider: 'stripe',
+        orderId,
+      },
+      {
+        headers: { Authorization: `Bearer ${userInfo.token}` },
       }
+    );
 
-      const { data } = await axios.post(
-        `${BASE_URL}/api/v1/payment/order`,
-        {
-          amount: convertToUSD(order.totalPrice),
-          currency: 'usd',
-          provider: 'stripe',
-          orderId,
-        },
-        {
-          headers: { Authorization: `Bearer ${userInfo.token}` }
-        }
-      );
+    // ✅ Initialize Stripe.js
+    const stripe = window.Stripe(publishableKey);
 
-      const stripe = window.Stripe(paymentConfig.stripePublishableKey);
-      if (!stripe) {
-        throw new Error('Stripe.js failed to load');
-      }
-
-      await stripe.redirectToCheckout({
-        sessionId: data.id,
-      });
-    } catch (error) {
-      toast.error(error?.data?.message || error.message || 'Stripe payment failed');
+    if (!stripe) {
+      throw new Error('Stripe.js failed to load');
     }
-  };
+
+    // ✅ Redirect user to Stripe checkout
+    await stripe.redirectToCheckout({
+      sessionId: data.id,
+    });
+  } catch (error) {
+    toast.error(error?.response?.data?.message || error.message || 'Stripe payment failed');
+  }
+};
+
 
   const handlePayPalPayment = async () => {
     try {
