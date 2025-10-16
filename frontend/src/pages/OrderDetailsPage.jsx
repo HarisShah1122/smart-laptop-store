@@ -45,6 +45,7 @@ const OrderDetailsPage = () => {
 
   useEffect(() => {
     if (error) {
+      console.error('Order fetch error in frontend:', error); // Debug log
       toast.error(error?.data?.message || error.message || 'Failed to fetch order details');
     }
   }, [error]);
@@ -177,7 +178,7 @@ const OrderDetailsPage = () => {
                           </Col>
                           <Col md={6}>
                             <Link
-                              to={`/product/${item.productId}`} // Use productId
+                              to={`/product/${item.productId}`}
                               className='text-dark'
                               style={{ textDecoration: 'none' }}
                             >

@@ -12,10 +12,15 @@ const getOrderById = asyncHandler(async (req, res, next) => {
     console.log('Received orderId:', orderId, 'Type:', typeof orderId); // Debug log
 
     // Validate orderId
-    const parsedOrderId = parseInt(orderId, 10);
-    if (isNaN(parsedOrderId) || parsedOrderId <= 0) {
+    if (!orderId) {
       res.statusCode = 400;
-      throw new Error('Invalid order ID: must be a positive number');
+      throw new Error('Order ID is required');
+    }
+
+    const parsedOrderId = parseInt(orderId, 10);
+    if (isNaN(parsedOrderId)) {
+      res.statusCode = 400;
+      throw new Error('Invalid order ID: must be a number');
     }
 
     const order = await Order.findByPk(parsedOrderId, {
@@ -34,12 +39,12 @@ const getOrderById = asyncHandler(async (req, res, next) => {
       _id: order.id
     });
   } catch (error) {
-    console.error('Order fetch error:', error);
+    console.error('Order fetch error:', error.message, 'Stack:', error.stack); // Detailed error log
     next(error);
   }
 });
 
-// Other endpoints (addOrderItems, getMyOrders, etc.) remain unchanged
+// Other endpoints remain unchanged
 const addOrderItems = asyncHandler(async (req, res, next) => {
   try {
     const {
